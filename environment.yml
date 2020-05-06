@@ -1,6 +1,5 @@
-name: gettsim
+name: dag_gettsim
 channels:
-  - defaults
   - conda-forge
 dependencies:
   - python=3.7
@@ -8,12 +7,17 @@ dependencies:
   - anaconda-client
   - conda-build
   - conda-verify
+
+  - jupyterlab
+  - matplotlib
+  - networkx
   - pandas
   - pre-commit
   - pyyaml
   - pytest
   - pytest-cov
   - pytest-xdist
+
   - restructuredtext_lint
   - sphinx
   - sphinx_rtd_theme
