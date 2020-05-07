@@ -1,9 +1,9 @@
 import pandas as pd
 
-from gettsim.pre_processing.apply_tax_funcs import apply_tax_transfer_func
-from gettsim.soz_vers import soc_ins_contrib
-from gettsim.tests.test_soz_vers import INPUT_COLS
-from gettsim.tests.test_soz_vers import OUT_COLS
+from dag_gettsim.pre_processing.apply_tax_funcs import apply_tax_transfer_func
+from dag_gettsim.soz_vers import soc_ins_contrib
+from dag_gettsim.tests.test_soz_vers import INPUT_COLS
+from dag_gettsim.tests.test_soz_vers import OUT_COLS
 
 
 def belowmini(wohnort_ost, bruttolohn_m, params):

@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from gettsim.config import ROOT_DIR
+from dag_gettsim.config import ROOT_DIR
 
 
 @pytest.fixture(scope="session")

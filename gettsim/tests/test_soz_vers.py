@@ -3,7 +3,7 @@ import itertools
 import pandas as pd
 import pytest
 
-from gettsim.config import ROOT_DIR
+from dag_gettsim.config import ROOT_DIR
 from gettsim.pre_processing.apply_tax_funcs import apply_tax_transfer_func
 from gettsim.pre_processing.policy_for_date import get_policies_for_date
 from gettsim.soz_vers import soc_ins_contrib

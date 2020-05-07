@@ -7,8 +7,8 @@ import numpy as np
 import yaml
 
 from dag_gettsim.config import ROOT_DIR
-from gettsim.pre_processing.generic_functions import get_piecewise_parameters
-from gettsim.pre_processing.piecewise_functions import piecewise_polynomial
+from dag_gettsim.pre_processing.generic_functions import get_piecewise_parameters
+from dag_gettsim.pre_processing.piecewise_functions import piecewise_polynomial
 
 
 def get_policies_for_date(year, group, month=1, day=1, raw_group_data=None):
