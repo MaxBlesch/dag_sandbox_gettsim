@@ -18,7 +18,7 @@ def mini_job_grenze(wohnort_ost, params):
 
     Returns
     -------
-    Array
+    Array containing the income threshold for marginal employment.
     """
     return np.select(
         [wohnort_ost, ~wohnort_ost],
@@ -29,8 +29,49 @@ def mini_job_grenze(wohnort_ost, params):
     )
 
 
-def belowmini(bruttolohn_m, mini_job_grenze, params):
-    return bruttolohn_m < mini_job_grenze
+def geringfügig_beschäftigt(bruttolohn_m, mini_job_grenze, params):
+    """
+    Checking if individual earns less then marginal employment threshold.
+    Parameters
+    ----------
+    bruttolohn_m : pd.Series
+                   The wage of each individual.
+    mini_job_grenze : np.array
+                      Array containing the income threshold for marginal employment.
+    params
+
+    Returns
+    -------
+    pd.Series containing a boolean variable indicating if individual is marginal
+    employed.
+
+    """
+    belowmini = bruttolohn_m < mini_job_grenze
+    return pd.Series(data=belowmini, name="geringfügig_beschäftigt")
+
+
+def in_gleitzone(bruttolohn_m, geringfügig_beschäftigt, params):
+    """
+    Checking if individual earns less then threshold for regular employment,
+    but more then threshold of marginal employment.
+
+    Parameters
+    ----------
+    bruttolohn_m : pd.Series
+                   The wage of each individual.
+    mini_job_grenze : np.array
+                      Array containing the income threshold for marginal employment.
+    params
+
+    Returns
+    -------
+    pd.Series containing a boolean variable indicating if individual's wage is more
+    then marginal employment threshold but less than regular employment.
+    """
+    in_gleitzone = (params["geringfügige_eink_grenzen"]["midi_job"] >= bruttolohn_m) & (
+        ~geringfügig_beschäftigt
+    )
+    return pd.Series(data=in_gleitzone, name="in_gleitzone")
 
 
 def sozialv_beit_m(
@@ -56,7 +97,8 @@ def rentenv_beit_m(
     ges_rente_m,
     prv_krankv_beit_m,
     jahr,
-    belowmini,
+    geringfügig_beschäftigt,
+    in_gleitzone,
     params,
 ):
 
@@ -74,7 +116,8 @@ def rentenv_beit_m(
             ges_rente_m,
             prv_krankv_beit_m,
             jahr,
-            belowmini,
+            geringfügig_beschäftigt,
+            in_gleitzone,
         ],
         axis=1,
     )
@@ -103,7 +146,8 @@ def arbeitsl_v_beit_m(
     ges_rente_m,
     prv_krankv_beit_m,
     jahr,
-    belowmini,
+    geringfügig_beschäftigt,
+    in_gleitzone,
     params,
 ):
 
@@ -121,7 +165,8 @@ def arbeitsl_v_beit_m(
             ges_rente_m,
             prv_krankv_beit_m,
             jahr,
-            belowmini,
+            geringfügig_beschäftigt,
+            in_gleitzone,
         ],
         axis=1,
     )
@@ -150,7 +195,8 @@ def ges_krankv_beit_m(
     ges_rente_m,
     prv_krankv_beit_m,
     jahr,
-    belowmini,
+    geringfügig_beschäftigt,
+    in_gleitzone,
     params,
 ):
 
@@ -168,7 +214,8 @@ def ges_krankv_beit_m(
             ges_rente_m,
             prv_krankv_beit_m,
             jahr,
-            belowmini,
+            geringfügig_beschäftigt,
+            in_gleitzone,
         ],
         axis=1,
     )
@@ -197,7 +244,8 @@ def pflegev_beit_m(
     ges_rente_m,
     prv_krankv_beit_m,
     jahr,
-    belowmini,
+    geringfügig_beschäftigt,
+    in_gleitzone,
     params,
 ):
 
@@ -215,7 +263,8 @@ def pflegev_beit_m(
             ges_rente_m,
             prv_krankv_beit_m,
             jahr,
-            belowmini,
+            geringfügig_beschäftigt,
+            in_gleitzone,
         ],
         axis=1,
     )

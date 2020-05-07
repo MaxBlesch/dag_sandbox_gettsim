@@ -27,16 +27,8 @@ def soc_ins_contrib(person, params):
     # beginning.
     wohnort = "ost" if person["wohnort_ost"] else "west"
 
-    # Check if wage is in Gleitzone / Midi-Jobs
-    in_gleitzone = (
-        params["geringfügige_eink_grenzen"]["midi_job"] >= person["bruttolohn_m"]
-    ) & (
-        person["bruttolohn_m"]
-        >= params["geringfügige_eink_grenzen"]["mini_job"][wohnort]
-    )
-
     # Calculate accordingly the ssc
-    if person["belowmini"]:
+    if person["geringfügig_beschäftigt"]:
         person[
             [
                 "rentenv_beit_m",
@@ -45,7 +37,7 @@ def soc_ins_contrib(person, params):
                 "pflegev_beit_m",
             ]
         ] = 0.0
-    elif in_gleitzone:
+    elif person["in_gleitzone"]:
         # TODO: Before and in 2003 params["midi_grenze"] is 0 and
         #  therefore we won't reach this.
         person = calc_midi_contributions(person, params)
