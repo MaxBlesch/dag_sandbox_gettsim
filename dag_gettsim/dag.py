@@ -28,7 +28,7 @@ def compute_taxes_and_transfers(
 
     Returns:
         dict: Dictionary of Series containing the target quantities.
-
+functions
     """
     user_functions = [] if functions is None else functions
     user_functions = load_functions(user_functions)

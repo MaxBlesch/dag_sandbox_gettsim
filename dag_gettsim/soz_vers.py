@@ -27,8 +27,6 @@ def soc_ins_contrib(person, params):
     # beginning.
     wohnort = "ost" if person["wohnort_ost"] else "west"
 
-    # This is probably the point where Entgeltpunkte should be updated as well.
-
     # Check if wage is below the mini job grenze.
     belowmini = (
         person["bruttolohn_m"]
@@ -70,11 +68,6 @@ def soc_ins_contrib(person, params):
 
     # Add the care insurance contribution for pensions
     person["pflegev_beit_m"] += pv_ssc_pensions(person, params, wohnort)
-
-    # Sum of Social Insurance Contributions (for employees)
-    person["sozialv_beit_m"] = person[
-        ["rentenv_beit_m", "arbeitsl_v_beit_m", "ges_krankv_beit_m", "pflegev_beit_m"]
-    ].sum()
     return person
 
 
