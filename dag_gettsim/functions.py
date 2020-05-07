@@ -9,9 +9,7 @@ from dag_gettsim.tests.test_soz_vers import OUT_COLS
 
 def krankv_pflicht_rente(ges_rente_m, krankenv_beitr_bemess_grenze, params):
     relevante_rente = elementwise_min(ges_rente_m, krankenv_beitr_bemess_grenze)
-    return pd.Series(
-        index=ges_rente_m.index, name="krankv_pflicht_rente", data=relevante_rente
-    )
+    return pd.Series(name="krankv_pflicht_rente", data=relevante_rente)
 
 
 def krankenv_beitr_bemess_grenze(wohnort_ost, params):
@@ -43,18 +41,44 @@ def krankenv_beitr_bemess_grenze(wohnort_ost, params):
     )
 
 
-def krankenv_beitr_rente(ges_rente_m, krankv_pflicht_rente, params):
+def pflegev_beitr_rente(hat_kinder, alter, krankv_pflicht_rente, params):
     """
     Calculating the contribution to health insurance for pension income.
 
     Parameters
     ----------
-    ges_rente_m : pd.Series
-                  Monthly pension income.
+    hat_kinder : pd.Series
+                 Boolean indicating if individual has kids.
 
-    krankenv_beitr_bemess_grenze : np.array
-                                    Array containing the income threshold up to which
-                                    the rate of health insurance contributions apply.
+    alter : pd.Series
+            Age of individual
+
+    krankv_pflicht_rente : pd.Series
+                           Pensions which are subject to social insurance contributions
+    params
+
+    Returns
+    -------
+    Pandas Series containing monthly health insurance contributions for pension income.
+    """
+    standard_beitr = (
+        2 * params["soz_vers_beitr"]["pflegev"]["standard"] * krankv_pflicht_rente
+    )
+    standard_beitr.loc[(~hat_kinder) & (alter > 22)] += (
+        params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"] * krankv_pflicht_rente
+    )
+    return pd.Series(data=standard_beitr, name="pflegev_beitr_rente")
+
+
+def krankenv_beitr_rente(krankv_pflicht_rente, params):
+    """
+    Calculating the contribution to health insurance for pension income.
+
+    Parameters
+    ----------
+    krankv_pflicht_rente : pd.Series
+                           Pensions which are subject to social insurance contributions
+
     params
 
     Returns
@@ -63,7 +87,9 @@ def krankenv_beitr_rente(ges_rente_m, krankv_pflicht_rente, params):
     """
 
     beitr = params["soz_vers_beitr"]["ges_krankv"]["an"] * krankv_pflicht_rente
-    return pd.Series(index=ges_rente_m.index, data=beitr, name="krankenv_beitr_rente")
+    return pd.Series(
+        index=krankv_pflicht_rente.index, data=beitr, name="krankenv_beitr_rente"
+    )
 
 
 def mini_job_grenze(wohnort_ost, params):
@@ -157,7 +183,6 @@ def rentenv_beit_m(
     selbstständig,
     hat_kinder,
     eink_selbstst_m,
-    ges_rente_m,
     prv_krankv_beit_m,
     jahr,
     geringfügig_beschäftigt,
@@ -176,7 +201,6 @@ def rentenv_beit_m(
             selbstständig,
             hat_kinder,
             eink_selbstst_m,
-            ges_rente_m,
             prv_krankv_beit_m,
             jahr,
             geringfügig_beschäftigt,
@@ -206,7 +230,6 @@ def arbeitsl_v_beit_m(
     selbstständig,
     hat_kinder,
     eink_selbstst_m,
-    ges_rente_m,
     prv_krankv_beit_m,
     jahr,
     geringfügig_beschäftigt,
@@ -225,7 +248,6 @@ def arbeitsl_v_beit_m(
             selbstständig,
             hat_kinder,
             eink_selbstst_m,
-            ges_rente_m,
             prv_krankv_beit_m,
             jahr,
             geringfügig_beschäftigt,
@@ -255,7 +277,6 @@ def ges_krankv_beit_m(
     selbstständig,
     hat_kinder,
     eink_selbstst_m,
-    ges_rente_m,
     prv_krankv_beit_m,
     jahr,
     geringfügig_beschäftigt,
@@ -275,7 +296,6 @@ def ges_krankv_beit_m(
             selbstständig,
             hat_kinder,
             eink_selbstst_m,
-            ges_rente_m,
             prv_krankv_beit_m,
             jahr,
             geringfügig_beschäftigt,
@@ -307,11 +327,11 @@ def pflegev_beit_m(
     selbstständig,
     hat_kinder,
     eink_selbstst_m,
-    ges_rente_m,
     prv_krankv_beit_m,
     jahr,
     geringfügig_beschäftigt,
     in_gleitzone,
+    pflegev_beitr_rente,
     params,
 ):
 
@@ -326,7 +346,6 @@ def pflegev_beit_m(
             selbstständig,
             hat_kinder,
             eink_selbstst_m,
-            ges_rente_m,
             prv_krankv_beit_m,
             jahr,
             geringfügig_beschäftigt,
@@ -343,4 +362,6 @@ def pflegev_beit_m(
         func_kwargs={"params": params},
     )
 
+    # Add the care insurance contribution for pensions
+    df["pflegev_beit_m"] += pflegev_beitr_rente
     return df["pflegev_beit_m"]

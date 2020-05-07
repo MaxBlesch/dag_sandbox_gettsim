@@ -49,8 +49,6 @@ def soc_ins_contrib(person, params):
         person["ges_krankv_beit_m"] = selfemployed_gkv_ssc(person, params, wohnort)
         person["pflegev_beit_m"] = selfemployed_pv_ssc(person, params, wohnort)
 
-    # Add the care insurance contribution for pensions
-    person["pflegev_beit_m"] += pv_ssc_pensions(person, params, wohnort)
     return person
 
 
@@ -115,27 +113,6 @@ def selfemployed_pv_ssc(person, params, wohnort):
             2
             * params["soz_vers_beitr"]["pflegev"]["standard"]
             * min(person["eink_selbstst_m"], 0.75 * params["bezugsgröße"][wohnort])
-        )
-
-
-def pv_ssc_pensions(person, params, wohnort):
-    """Calculates the care insurance contributions for pensions. It is twice the
-    standard rate"""
-    if ~person["hat_kinder"] & (person["alter"] > 22):
-        return (
-            2 * params["soz_vers_beitr"]["pflegev"]["standard"]
-            + params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"]
-        ) * min(
-            person["ges_rente_m"], params["beitr_bemess_grenze"]["ges_krankv"][wohnort]
-        )
-    else:
-        return (
-            2
-            * params["soz_vers_beitr"]["pflegev"]["standard"]
-            * min(
-                person["ges_rente_m"],
-                params["beitr_bemess_grenze"]["ges_krankv"][wohnort],
-            )
         )
 
 
