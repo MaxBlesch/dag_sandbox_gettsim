@@ -49,9 +49,6 @@ def soc_ins_contrib(person, params):
         person["ges_krankv_beit_m"] = selfemployed_gkv_ssc(person, params, wohnort)
         person["pflegev_beit_m"] = selfemployed_pv_ssc(person, params, wohnort)
 
-    # Add the health insurance contribution for pensions
-    person["ges_krankv_beit_m"] += gkv_ssc_pensions(person, params, wohnort)
-
     # Add the care insurance contribution for pensions
     person["pflegev_beit_m"] += pv_ssc_pensions(person, params, wohnort)
     return person
@@ -140,14 +137,6 @@ def pv_ssc_pensions(person, params, wohnort):
                 params["beitr_bemess_grenze"]["ges_krankv"][wohnort],
             )
         )
-
-
-def gkv_ssc_pensions(person, params, wohnort):
-    """Calculates the health insurance contributions for pensions. It is the normal
-    rate"""
-    return params["soz_vers_beitr"]["ges_krankv"]["an"] * min(
-        person["ges_rente_m"], params["beitr_bemess_grenze"]["ges_krankv"][wohnort]
-    )
 
 
 def calc_midi_contributions(person, params):
