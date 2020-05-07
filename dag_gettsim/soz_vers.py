@@ -27,12 +27,6 @@ def soc_ins_contrib(person, params):
     # beginning.
     wohnort = "ost" if person["wohnort_ost"] else "west"
 
-    # Check if wage is below the mini job grenze.
-    belowmini = (
-        person["bruttolohn_m"]
-        < params["geringfügige_eink_grenzen"]["mini_job"][wohnort]
-    )
-
     # Check if wage is in Gleitzone / Midi-Jobs
     in_gleitzone = (
         params["geringfügige_eink_grenzen"]["midi_job"] >= person["bruttolohn_m"]
@@ -42,7 +36,7 @@ def soc_ins_contrib(person, params):
     )
 
     # Calculate accordingly the ssc
-    if belowmini:
+    if person["belowmini"]:
         person[
             [
                 "rentenv_beit_m",
