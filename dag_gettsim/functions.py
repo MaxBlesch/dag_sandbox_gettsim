@@ -7,6 +7,19 @@ from dag_gettsim.tests.test_soz_vers import OUT_COLS
 
 
 def mini_job_grenze(wohnort_ost, params):
+    """
+    Calculating the wage threshold for marginal employment.
+    Parameters
+    ----------
+    wohnort_ost : pd.Series
+                 Boolean variable indicating individual living in east germany.
+    params : dict
+            Dictionary containing the policy parameters
+
+    Returns
+    -------
+    Array
+    """
     return np.select(
         [wohnort_ost, ~wohnort_ost],
         [
@@ -17,7 +30,7 @@ def mini_job_grenze(wohnort_ost, params):
 
 
 def belowmini(bruttolohn_m, mini_job_grenze, params):
-    return pd.Series(data=bruttolohn_m < mini_job_grenze, name="belowmini")
+    return bruttolohn_m < mini_job_grenze
 
 
 def sozialv_beit_m(
