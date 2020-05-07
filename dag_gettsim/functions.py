@@ -7,6 +7,13 @@ from dag_gettsim.soz_vers import soc_ins_contrib
 from dag_gettsim.tests.test_soz_vers import OUT_COLS
 
 
+def krankv_pflicht_rente(ges_rente_m, krankenv_beitr_bemess_grenze, params):
+    relevante_rente = elementwise_min(ges_rente_m, krankenv_beitr_bemess_grenze)
+    return pd.Series(
+        index=ges_rente_m.index, name="krankv_pflicht_rente", data=relevante_rente
+    )
+
+
 def krankenv_beitr_bemess_grenze(wohnort_ost, params):
     """
     Calculating the income threshold up to which the rate of health insurance
@@ -36,7 +43,7 @@ def krankenv_beitr_bemess_grenze(wohnort_ost, params):
     )
 
 
-def krankenv_beitr_rente(ges_rente_m, krankenv_beitr_bemess_grenze, params):
+def krankenv_beitr_rente(ges_rente_m, krankv_pflicht_rente, params):
     """
     Calculating the contribution to health insurance for pension income.
 
@@ -55,9 +62,7 @@ def krankenv_beitr_rente(ges_rente_m, krankenv_beitr_bemess_grenze, params):
     Pandas Series containing monthly health insurance contributions for pension income.
     """
 
-    beitr = params["soz_vers_beitr"]["ges_krankv"]["an"] * elementwise_min(
-        ges_rente_m, krankenv_beitr_bemess_grenze
-    )
+    beitr = params["soz_vers_beitr"]["ges_krankv"]["an"] * krankv_pflicht_rente
     return pd.Series(index=ges_rente_m.index, data=beitr, name="krankenv_beitr_rente")
 
 
