@@ -721,18 +721,18 @@ ag_abgaben_geringf:
     en:
   unit: share
   1984-01-01:
-    ges_krankenv: 0
+    ges_krankv: 0
     rentenv: 0
     st: 0
   1999-01-01:
-    ges_krankenv: 0.1
+    ges_krankv: 0.1
     rentenv: 0.12
     st: 0
   2004-01-01:
-    ges_krankenv: 0.11
+    ges_krankv: 0.11
     rentenv: 0.12
     st: 0.02
   2007-01-01:
-    ges_krankenv: 0.13
+    ges_krankv: 0.13
     rentenv: 0.15
     st: 0.02

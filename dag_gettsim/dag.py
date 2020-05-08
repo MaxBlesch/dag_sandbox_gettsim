@@ -34,7 +34,7 @@ functions
     user_functions = load_functions(user_functions)
 
     internal_functions = {}
-    internal_function_files = ["functions.py", "krankenv_pflegev.py"]
+    internal_function_files = ["functions.py", "krankv_pflegev.py", "eink_grenzen.py"]
     for file in internal_function_files:
         new_funcs = load_functions(Path(__file__).parent / file)
         internal_functions.update(new_funcs)
