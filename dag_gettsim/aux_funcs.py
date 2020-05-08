@@ -5,7 +5,7 @@ def elementwise_min(x, y):
     """
     Calculating a pandas Series which contains the elementwise minimum of x and y.
     Parameters
-    ----------p
+    ----------
     x : pd.Series
     y : pd.Series, int or float
 

@@ -44,11 +44,6 @@ def soc_ins_contrib(person, params):
     else:
         person = ssc_regular_job(person, params, wohnort)
 
-    # Self-employed may insure via the public health and care insurance.
-    if person["selbstständig"] & ~person["prv_krankv_beit_m"]:
-        person["ges_krankv_beit_m"] = selfemployed_gkv_ssc(person, params, wohnort)
-        person["pflegev_beit_m"] = selfemployed_pv_ssc(person, params, wohnort)
-
     return person
 
 
@@ -86,34 +81,6 @@ def ssc_regular_job(person, params, wohnort):
             * person["_lohn_krankv"]
         )
     return person
-
-
-def selfemployed_gkv_ssc(person, params, wohnort):
-    """Calculates health insurance contributions. Self-employed pay the full
-    contribution (employer + employee), which is either assessed on their
-    self-employement income or 3/4 of the 'Bezugsgröße'"""
-    return (
-        params["soz_vers_beitr"]["ges_krankv"]["an"]
-        + params["soz_vers_beitr"]["ges_krankv"]["ag"]
-    ) * min(person["eink_selbstst_m"], 0.75 * params["bezugsgröße"][wohnort])
-
-
-def selfemployed_pv_ssc(person, params, wohnort):
-    """Calculates care insurance contributions. Self-employed pay the full
-        contribution (employer + employee), which is either assessed on their
-        self-employement income or 3/4 of the 'Bezugsgröße'"""
-    if ~person["hat_kinder"] & (person["alter"] > 22):
-        return 2 * params["soz_vers_beitr"]["pflegev"]["standard"] + params[
-            "soz_vers_beitr"
-        ]["pflegev"]["zusatz_kinderlos"] * min(
-            person["eink_selbstst_m"], 0.75 * params["bezugsgröße"][wohnort]
-        )
-    else:
-        return (
-            2
-            * params["soz_vers_beitr"]["pflegev"]["standard"]
-            * min(person["eink_selbstst_m"], 0.75 * params["bezugsgröße"][wohnort])
-        )
 
 
 def calc_midi_contributions(person, params):

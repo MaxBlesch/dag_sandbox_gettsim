@@ -32,7 +32,12 @@ functions
     """
     user_functions = [] if functions is None else functions
     user_functions = load_functions(user_functions)
-    internal_functions = load_functions(Path(__file__).parent / "functions.py")
+
+    internal_functions = {}
+    internal_function_files = ["functions.py", "krankenv_pflegev.py"]
+    for file in internal_function_files:
+        new_funcs = load_functions(Path(__file__).parent / file)
+        internal_functions.update(new_funcs)
 
     func_dict = create_function_dict(user_functions, internal_functions, params)
 
