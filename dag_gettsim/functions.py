@@ -110,6 +110,7 @@ def rentenv_beit_m(
         out_cols=OUT_COLS,
         func_kwargs={"params": params},
     )
+    df.loc[geringfügig_beschäftigt, "rentenv_beit_m"] = 0
 
     return df["rentenv_beit_m"]
 
@@ -157,116 +158,6 @@ def arbeitsl_v_beit_m(
         out_cols=OUT_COLS,
         func_kwargs={"params": params},
     )
+    df.loc[geringfügig_beschäftigt, "arbeitsl_v_beit_m"] = 0
 
     return df["arbeitsl_v_beit_m"]
-
-
-def ges_krankv_beit_m(
-    p_id,
-    hh_id,
-    tu_id,
-    bruttolohn_m,
-    wohnort_ost,
-    alter,
-    selbstständig,
-    hat_kinder,
-    eink_selbstst_m,
-    prv_krankv_beit_m,
-    jahr,
-    geringfügig_beschäftigt,
-    in_gleitzone,
-    ges_krankv_beitr_rente,
-    ges_krankv_beitr_selbst,
-    params,
-):
-
-    df = pd.concat(
-        [
-            p_id,
-            hh_id,
-            tu_id,
-            bruttolohn_m,
-            wohnort_ost,
-            alter,
-            selbstständig,
-            hat_kinder,
-            eink_selbstst_m,
-            prv_krankv_beit_m,
-            jahr,
-            geringfügig_beschäftigt,
-            in_gleitzone,
-        ],
-        axis=1,
-    )
-    df = apply_tax_transfer_func(
-        df,
-        tax_func=soc_ins_contrib,
-        level=["hh_id", "tu_id", "p_id"],
-        in_cols=list(df.columns),
-        out_cols=OUT_COLS,
-        func_kwargs={"params": params},
-    )
-
-    # Add the health insurance contribution for pensions
-    df["ges_krankv_beit_m"] += ges_krankv_beitr_rente
-    # Self-employed may insure via the public health and care insurance.
-    df.loc[
-        df["selbstständig"] & ~df["prv_krankv_beit_m"], "ges_krankv_beit_m"
-    ] = ges_krankv_beitr_selbst
-    return df["ges_krankv_beit_m"]
-
-
-def pflegev_beit_m(
-    p_id,
-    hh_id,
-    tu_id,
-    bruttolohn_m,
-    wohnort_ost,
-    alter,
-    selbstständig,
-    hat_kinder,
-    eink_selbstst_m,
-    prv_krankv_beit_m,
-    jahr,
-    geringfügig_beschäftigt,
-    in_gleitzone,
-    pflegev_beitr_rente,
-    pflegev_beitr_selbst,
-    params,
-):
-
-    df = pd.concat(
-        [
-            p_id,
-            hh_id,
-            tu_id,
-            bruttolohn_m,
-            wohnort_ost,
-            alter,
-            selbstständig,
-            hat_kinder,
-            eink_selbstst_m,
-            prv_krankv_beit_m,
-            jahr,
-            geringfügig_beschäftigt,
-            in_gleitzone,
-        ],
-        axis=1,
-    )
-    df = apply_tax_transfer_func(
-        df,
-        tax_func=soc_ins_contrib,
-        level=["hh_id", "tu_id", "p_id"],
-        in_cols=list(df.columns),
-        out_cols=OUT_COLS,
-        func_kwargs={"params": params},
-    )
-
-    # Add the care insurance contribution for pensions
-    df["pflegev_beit_m"] += pflegev_beitr_rente
-
-    # Self-employed may insure via the public health and care insurance.
-    df.loc[
-        df["selbstständig"] & ~df["prv_krankv_beit_m"], "pflegev_beit_m"
-    ] = pflegev_beitr_selbst
-    return df["pflegev_beit_m"]

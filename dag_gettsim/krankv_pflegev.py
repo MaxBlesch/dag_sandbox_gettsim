@@ -2,6 +2,179 @@ import numpy as np
 import pandas as pd
 
 from dag_gettsim.aux_funcs import elementwise_min
+from dag_gettsim.pre_processing.apply_tax_funcs import apply_tax_transfer_func
+from dag_gettsim.soz_vers import soc_ins_contrib
+from dag_gettsim.tests.test_soz_vers import OUT_COLS
+
+
+def ges_krankv_beit_m(
+    p_id,
+    hh_id,
+    tu_id,
+    bruttolohn_m,
+    wohnort_ost,
+    alter,
+    selbstständig,
+    hat_kinder,
+    eink_selbstst_m,
+    prv_krankv_beit_m,
+    jahr,
+    geringfügig_beschäftigt,
+    in_gleitzone,
+    ges_krankv_beitr_rente,
+    ges_krankv_beitr_selbst,
+    krankv_beit_regular_job,
+    params,
+):
+
+    df = pd.concat(
+        [
+            p_id,
+            hh_id,
+            tu_id,
+            bruttolohn_m,
+            wohnort_ost,
+            alter,
+            selbstständig,
+            hat_kinder,
+            eink_selbstst_m,
+            prv_krankv_beit_m,
+            jahr,
+            geringfügig_beschäftigt,
+            in_gleitzone,
+        ],
+        axis=1,
+    )
+    df = apply_tax_transfer_func(
+        df,
+        tax_func=soc_ins_contrib,
+        level=["hh_id", "tu_id", "p_id"],
+        in_cols=list(df.columns),
+        out_cols=OUT_COLS,
+        func_kwargs={"params": params},
+    )
+    df.loc[geringfügig_beschäftigt, "ges_krankv_beit_m"] = 0
+
+    cond_payoffs = [
+        (~geringfügig_beschäftigt & ~in_gleitzone, krankv_beit_regular_job),
+        (selbstständig & ~prv_krankv_beit_m, ges_krankv_beitr_selbst),
+    ]
+
+    for logic_cond, payoff in cond_payoffs:
+        df.loc[logic_cond, "ges_krankv_beit_m"] = payoff.loc[logic_cond]
+
+    # Add the health insurance contribution for pensions
+    df["ges_krankv_beit_m"] += ges_krankv_beitr_rente
+    return df["ges_krankv_beit_m"]
+
+
+def pflegev_beit_m(
+    p_id,
+    hh_id,
+    tu_id,
+    bruttolohn_m,
+    wohnort_ost,
+    alter,
+    selbstständig,
+    hat_kinder,
+    eink_selbstst_m,
+    prv_krankv_beit_m,
+    jahr,
+    geringfügig_beschäftigt,
+    in_gleitzone,
+    pflegev_beitr_rente,
+    pflegev_beitr_selbst,
+    pflegev_beit_regular_job,
+    params,
+):
+
+    df = pd.concat(
+        [
+            p_id,
+            hh_id,
+            tu_id,
+            bruttolohn_m,
+            wohnort_ost,
+            alter,
+            selbstständig,
+            hat_kinder,
+            eink_selbstst_m,
+            prv_krankv_beit_m,
+            jahr,
+            geringfügig_beschäftigt,
+            in_gleitzone,
+        ],
+        axis=1,
+    )
+    df = apply_tax_transfer_func(
+        df,
+        tax_func=soc_ins_contrib,
+        level=["hh_id", "tu_id", "p_id"],
+        in_cols=list(df.columns),
+        out_cols=OUT_COLS,
+        func_kwargs={"params": params},
+    )
+    df.loc[geringfügig_beschäftigt, "pflegev_beit_m"] = 0
+
+    cond_payoffs = [
+        (~geringfügig_beschäftigt & ~in_gleitzone, pflegev_beit_regular_job),
+        (selbstständig & ~prv_krankv_beit_m, pflegev_beitr_selbst),
+    ]
+
+    for logic_cond, payoff in cond_payoffs:
+        df.loc[logic_cond, "pflegev_beit_m"] = payoff.loc[logic_cond]
+
+    # Add the care insurance contribution for pensions
+    df["pflegev_beit_m"] += pflegev_beitr_rente
+
+    return df["pflegev_beit_m"]
+
+
+def krankv_beit_regular_job(lohn_krankv, params):
+    """
+    Calculates health insurance contributions for regualr jobs
+
+    Parameters
+    ----------
+    lohn_krankv : pd.Series
+                Wage subject to health and care insurance
+    params
+
+    Returns
+    -------
+    Pandas Series containing monthly health insurance contributions for self employed
+    income.
+    """
+    out = params["soz_vers_beitr"]["ges_krankv"]["an"] * lohn_krankv
+    return pd.Series(index=lohn_krankv.index, data=out, name="krankv_beit_regular_job")
+
+
+def pflegev_beit_regular_job(hat_kinder, lohn_krankv, alter, params):
+    """
+    Calculates care insurance contributions for regular jobs.
+
+    Parameters
+    ----------
+    hat_kinder : pd.Series
+                 Boolean indicating if individual has kids.
+
+    alter : pd.Series
+            Age of individual
+
+    lohn_krankv : pd.Series
+                Wage subject to health and care insurance
+    params
+
+    Returns
+    -------
+    Pandas Series containing monthly care insurance contributions for self employed
+    income.
+    """
+    out = lohn_krankv.multiply(params["soz_vers_beitr"]["pflegev"]["standard"])
+    out.loc[~hat_kinder & alter.gt(22)] += (
+        params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"] * lohn_krankv
+    )
+    return pd.Series(index=lohn_krankv.index, data=out, name="pflegev_beit_regular_job")
 
 
 def lohn_krankv(bruttolohn_m, krankv_beitr_bemess_grenze, params):

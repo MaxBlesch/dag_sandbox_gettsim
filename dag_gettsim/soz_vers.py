@@ -29,17 +29,8 @@ def soc_ins_contrib(person, params):
 
     # Calculate accordingly the ssc
     if person["geringfügig_beschäftigt"]:
-        person[
-            [
-                "rentenv_beit_m",
-                "arbeitsl_v_beit_m",
-                "ges_krankv_beit_m",
-                "pflegev_beit_m",
-            ]
-        ] = 0.0
+        pass
     elif person["in_gleitzone"]:
-        # TODO: Before and in 2003 params["midi_grenze"] is 0 and
-        #  therefore we won't reach this.
         person = calc_midi_contributions(person, params)
     else:
         person = ssc_regular_job(person, params, wohnort)
@@ -54,9 +45,6 @@ def ssc_regular_job(person, params, wohnort):
     person["_lohn_rentenv"] = min(
         person["bruttolohn_m"], params["beitr_bemess_grenze"]["rentenv"][wohnort]
     )
-    person["_lohn_krankv"] = min(
-        person["bruttolohn_m"], params["beitr_bemess_grenze"]["ges_krankv"][wohnort]
-    )
     # Then, calculate employee contributions.
     # Old-Age Pension Insurance / Rentenversicherung
     person["rentenv_beit_m"] = (
@@ -66,20 +54,6 @@ def ssc_regular_job(person, params, wohnort):
     person["arbeitsl_v_beit_m"] = (
         params["soz_vers_beitr"]["arbeitsl_v"] * person["_lohn_rentenv"]
     )
-    # Health Insurance for Employees (GKV)
-    person["ges_krankv_beit_m"] = (
-        params["soz_vers_beitr"]["ges_krankv"]["an"] * person["_lohn_krankv"]
-    )
-    # Care Insurance / Pflegeversicherung
-    person["pflegev_beit_m"] = (
-        params["soz_vers_beitr"]["pflegev"]["standard"] * person["_lohn_krankv"]
-    )
-    # If you are above 23 and without kids, you have to pay a higher rate
-    if ~person["hat_kinder"] & (person["alter"] > 22):
-        person["pflegev_beit_m"] += (
-            params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"]
-            * person["_lohn_krankv"]
-        )
     return person
 
 
