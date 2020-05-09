@@ -215,7 +215,7 @@ def calc_midi_f(params):
     )
     dbsv = an_anteil + ag_anteil
     pauschmini = (
-        params["ag_abgaben_geringf"]["ges_krankenv"]
+        params["ag_abgaben_geringf"]["ges_krankv"]
         + params["ag_abgaben_geringf"]["rentenv"]
         + params["ag_abgaben_geringf"]["st"]
     )
