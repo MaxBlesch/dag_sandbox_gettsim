@@ -105,7 +105,7 @@ def midi_job_bemessungsentgelt(bruttolohn_m, params):
         + params["ag_abgaben_geringf"]["st"]
     )
     # Now calculate final factor
-    f = pausch_mini / (an_anteil + ag_anteil)
+    f = round(pausch_mini / (an_anteil + ag_anteil), 4)
 
     # Now use the factor to calculate the overall bemessungsentgelt
     mini_job_anteil = f * params["geringfügige_eink_grenzen"]["mini_job"]["west"]

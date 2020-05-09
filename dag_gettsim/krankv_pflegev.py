@@ -439,7 +439,101 @@ def ges_beitr_krankv_midi_job(midi_job_bemessungsentgelt, params):
     )
 
 
-def ges_beitr_pflegevv_midi_job(hat_kinder, alter, midi_job_bemessungsentgelt, params):
+def ag_beitr_krankv_midi_job(bruttolohn_m, params):
+    """
+    Calculating the employer health insurance contribution.
+
+    Parameters
+    ----------
+    bruttolohn_m : pd.Series
+                   The wage of each individual.
+    params
+
+    Returns
+    -------
+
+    """
+    out = params["soz_vers_beitr"]["ges_krankv"]["ag"] * bruttolohn_m
+    return pd.Series(
+        index=bruttolohn_m.index, data=out, name="ag_beitr_krankv_midi_job",
+    )
+
+
+def an_beitr_pflegev_midi_job(
+    ges_beitr_pflegev_midi_job, ag_beitr_pflegev_midi_job, params
+):
+    """
+    Calculating the employer care insurance contribution.
+
+    Parameters
+    ----------
+    ges_beitr_pflegev_midi_job : pd.Series
+                                    Sum of employer and employee care
+                                    insurance contributions.
+
+    ag_beitr_pflegev_midi_job : pd.Series
+                                   Employer care insurance contribution.
+    params
+
+    Returns
+    -------
+
+    """
+    out = ges_beitr_pflegev_midi_job - ag_beitr_pflegev_midi_job
+    return pd.Series(
+        index=ag_beitr_pflegev_midi_job.index,
+        data=out,
+        name="an_beitr_pflegev_midi_job",
+    )
+
+
+def an_beitr_krankv_midi_job(
+    ges_beitr_krankv_midi_job, ag_beitr_krankv_midi_job, params
+):
+    """
+    Calculating the employer health insurance contribution.
+
+    Parameters
+    ----------
+    ges_beitr_krankv_midi_job : pd.Series
+                                    Sum of employer and employee health
+                                    insurance contributions.
+
+    ag_beitr_krankv_midi_job : pd.Series
+                               Employer health insurance contribution.
+    params
+
+    Returns
+    -------
+
+    """
+    out = ges_beitr_krankv_midi_job - ag_beitr_krankv_midi_job
+    return pd.Series(
+        index=ag_beitr_krankv_midi_job.index, data=out, name="an_beitr_krankv_midi_job",
+    )
+
+
+def ag_beitr_pflegev_midi_job(bruttolohn_m, params):
+    """
+    Calculating the employer care insurance contribution.
+
+    Parameters
+    ----------
+    bruttolohn_m : pd.Series
+                   The wage of each individual.
+    params
+
+    Returns
+    -------
+
+    """
+    out = params["soz_vers_beitr"]["pflegev"]["standard"] * bruttolohn_m
+    return pd.Series(
+        index=bruttolohn_m.index, data=out, name="ag_beitr_pflegev_midi_job",
+    )
+
+
+def ges_beitr_pflegev_midi_job(hat_kinder, alter, midi_job_bemessungsentgelt, params):
     """
     Calculating the sum of employee and employer care insurance contribution.
 

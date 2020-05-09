@@ -93,6 +93,148 @@ def lohn_rente(bruttolohn_m, rentenv_beitr_bemess_grenze, params):
     return pd.Series(index=bruttolohn_m.index, data=out, name="lohn_rente")
 
 
+def ges_beitr_arbeitsl_v_midi_job(midi_job_bemessungsentgelt, params):
+    """
+    Calculating the sum of employee and employer unemployment insurance contribution.
+
+    Parameters
+    ----------
+    midi_job_bemessungsentgelt : pd.Series
+                                 The Bemessungsentgelt subject to social insurance
+                                 contributions.
+    params
+
+    Returns
+    -------
+
+    """
+    out = 2 * params["soz_vers_beitr"]["arbeitsl_v"] * midi_job_bemessungsentgelt
+    return pd.Series(
+        index=midi_job_bemessungsentgelt.index,
+        data=out,
+        name="ges_beitr_arbeitsl_v_midi_job",
+    )
+
+
+def ges_beitr_rentenv_midi_job(midi_job_bemessungsentgelt, params):
+    """
+    Calculating the sum of employee and employer pension insurance contribution.
+
+    Parameters
+    ----------
+    midi_job_bemessungsentgelt : pd.Series
+                                 The Bemessungsentgelt subject to social insurance
+                                 contributions.
+    params
+
+    Returns
+    -------
+
+    """
+    out = 2 * params["soz_vers_beitr"]["rentenv"] * midi_job_bemessungsentgelt
+    return pd.Series(
+        index=midi_job_bemessungsentgelt.index,
+        data=out,
+        name="ges_beitr_rentenv_midi_job",
+    )
+
+
+def ag_beitr_rentenv_midi_job(bruttolohn_m, params):
+    """
+    Calculating the employer pension insurance contribution.
+
+    Parameters
+    ----------
+    bruttolohn_m : pd.Series
+                   The wage of each individual.
+    params
+
+    Returns
+    -------
+
+    """
+    out = params["soz_vers_beitr"]["rentenv"] * bruttolohn_m
+    return pd.Series(
+        index=bruttolohn_m.index, data=out, name="ag_beitr_rentenv_midi_job",
+    )
+
+
+def ag_beitr_arbeitsl_v_midi_job(bruttolohn_m, params):
+    """
+    Calculating the employer unemployment insurance contribution.
+
+    Parameters
+    ----------
+    bruttolohn_m : pd.Series
+                   The wage of each individual.
+    params
+
+    Returns
+    -------
+
+    """
+    out = params["soz_vers_beitr"]["arbeitsl_v"] * bruttolohn_m
+    return pd.Series(
+        index=bruttolohn_m.index, data=out, name="ag_beitr_arbeitsl_v_midi_job",
+    )
+
+
+def an_beitr_rentenv_midi_job(
+    ges_beitr_rentenv_midi_job, ag_beitr_rentenv_midi_job, params
+):
+    """
+    Calculating the employer unemployment insurance contribution.
+
+    Parameters
+    ----------
+    ges_beitr_rentenv_midi_job : pd.Series
+                                    Sum of employer and employee pension
+                                    insurance contributions.
+
+    ag_beitr_rentenv_midi_job : pd.Series
+                                   Employer pension insurance contribution.
+    params
+
+    Returns
+    -------
+
+    """
+    out = ges_beitr_rentenv_midi_job - ag_beitr_rentenv_midi_job
+    return pd.Series(
+        index=ag_beitr_rentenv_midi_job.index,
+        data=out,
+        name="an_beitr_arbeitsl_v_midi_job",
+    )
+
+
+def an_beitr_arbeitsl_v_midi_job(
+    ges_beitr_arbeitsl_v_midi_job, ag_beitr_arbeitsl_v_midi_job, params
+):
+    """
+    Calculating the employer unemployment insurance contribution.
+
+    Parameters
+    ----------
+    ges_beitr_arbeitsl_v_midi_job : pd.Series
+                                    Sum of employer and employee unemployment
+                                    insurance contributions.
+
+    ag_beitr_arbeitsl_v_midi_job : pd.Series
+                                   Employer unemployment insurance contribution.
+    params
+
+    Returns
+    -------
+
+    """
+    out = ges_beitr_arbeitsl_v_midi_job - ag_beitr_arbeitsl_v_midi_job
+    return pd.Series(
+        index=ag_beitr_arbeitsl_v_midi_job.index,
+        data=out,
+        name="an_beitr_arbeitsl_v_midi_job",
+    )
+
+
 def sozialv_beit_m(
     pflegev_beit_m, ges_krankv_beit_m, rentenv_beit_m, arbeitsl_v_beit_m, params
 ):
@@ -104,106 +246,50 @@ def sozialv_beit_m(
 
 
 def rentenv_beit_m(
-    p_id,
-    hh_id,
-    tu_id,
-    bruttolohn_m,
-    wohnort_ost,
-    alter,
-    selbstständig,
-    hat_kinder,
-    eink_selbstst_m,
-    prv_krankv_beit_m,
-    jahr,
     geringfügig_beschäftigt,
     in_gleitzone,
     rentenv_beit_regular_job,
+    an_beitr_rentenv_midi_job,
     params,
 ):
+    rentenv_beit_m = pd.Series(
+        index=geringfügig_beschäftigt.index, name="rentenv_beit_m", dtype=float
+    )
 
-    df = pd.concat(
-        [
-            p_id,
-            hh_id,
-            tu_id,
-            bruttolohn_m,
-            wohnort_ost,
-            alter,
-            selbstständig,
-            hat_kinder,
-            eink_selbstst_m,
-            prv_krankv_beit_m,
-            jahr,
-            geringfügig_beschäftigt,
-            in_gleitzone,
-        ],
-        axis=1,
-    )
-    df = apply_tax_transfer_func(
-        df,
-        tax_func=soc_ins_contrib,
-        level=["hh_id", "tu_id", "p_id"],
-        in_cols=list(df.columns),
-        out_cols=OUT_COLS,
-        func_kwargs={"params": params},
-    )
-    df.loc[geringfügig_beschäftigt, "rentenv_beit_m"] = 0
+    # Set contribution 0 for people in minijob
+    rentenv_beit_m.loc[geringfügig_beschäftigt] = 0
+
     cond_payoffs = [
-        (~geringfügig_beschäftigt & ~in_gleitzone, rentenv_beit_regular_job)
+        (in_gleitzone, an_beitr_rentenv_midi_job),
+        (~geringfügig_beschäftigt & ~in_gleitzone, rentenv_beit_regular_job),
     ]
-    for logic_cond, payoff in cond_payoffs:
-        df.loc[logic_cond, "rentenv_beit_m"] = payoff.loc[logic_cond]
 
-    return df["rentenv_beit_m"]
+    for logic_cond, payoff in cond_payoffs:
+        rentenv_beit_m.loc[logic_cond] = payoff.loc[logic_cond]
+
+    return rentenv_beit_m
 
 
 def arbeitsl_v_beit_m(
-    p_id,
-    hh_id,
-    tu_id,
-    bruttolohn_m,
-    wohnort_ost,
-    alter,
-    selbstständig,
-    hat_kinder,
-    eink_selbstst_m,
-    prv_krankv_beit_m,
-    jahr,
     geringfügig_beschäftigt,
     in_gleitzone,
+    an_beitr_arbeitsl_v_midi_job,
     arbeitsl_v_regular_job,
     params,
 ):
+    arbeitsl_v_beit_m = pd.Series(
+        index=geringfügig_beschäftigt.index, name="arbeitsl_v_beit_m", dtype=float
+    )
 
-    df = pd.concat(
-        [
-            p_id,
-            hh_id,
-            tu_id,
-            bruttolohn_m,
-            wohnort_ost,
-            alter,
-            selbstständig,
-            hat_kinder,
-            eink_selbstst_m,
-            prv_krankv_beit_m,
-            jahr,
-            geringfügig_beschäftigt,
-            in_gleitzone,
-        ],
-        axis=1,
-    )
-    df = apply_tax_transfer_func(
-        df,
-        tax_func=soc_ins_contrib,
-        level=["hh_id", "tu_id", "p_id"],
-        in_cols=list(df.columns),
-        out_cols=OUT_COLS,
-        func_kwargs={"params": params},
-    )
-    df.loc[geringfügig_beschäftigt, "arbeitsl_v_beit_m"] = 0
-    cond_payoffs = [(~geringfügig_beschäftigt & ~in_gleitzone, arbeitsl_v_regular_job)]
+    # Set contribution 0 for people in minijob
+    arbeitsl_v_beit_m.loc[geringfügig_beschäftigt] = 0
+
+    cond_payoffs = [
+        (in_gleitzone, an_beitr_arbeitsl_v_midi_job),
+        (~geringfügig_beschäftigt & ~in_gleitzone, arbeitsl_v_regular_job),
+    ]
+
     for logic_cond, payoff in cond_payoffs:
-        df.loc[logic_cond, "arbeitsl_v_beit_m"] = payoff.loc[logic_cond]
+        arbeitsl_v_beit_m.loc[logic_cond] = payoff.loc[logic_cond]
 
-    return df["arbeitsl_v_beit_m"]
+    return arbeitsl_v_beit_m
