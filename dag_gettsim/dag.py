@@ -34,9 +34,13 @@ functions
     user_functions = load_functions(user_functions)
 
     internal_functions = {}
-    internal_function_files = ["functions.py", "krankv_pflegev.py", "eink_grenzen.py"]
+    internal_function_files = [
+        "arbeitsl_v_rentenv.py",
+        "krankv_pflegev.py",
+        "eink_grenzen.py",
+    ]
     for file in internal_function_files:
-        new_funcs = load_functions(Path(__file__).parent / file)
+        new_funcs = load_functions(Path(__file__).parent / "soz_vers_funcs" / file)
         internal_functions.update(new_funcs)
 
     func_dict = create_function_dict(user_functions, internal_functions, params)
