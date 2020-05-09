@@ -437,3 +437,42 @@ def ges_beitr_krankv_midi_job(midi_job_bemessungsentgelt, params):
         data=out,
         name="ges_beitr_krankv_midi_job",
     )
+
+
+def ges_beitr_pflegevv_midi_job(hat_kinder, alter, midi_job_bemessungsentgelt, params):
+    """
+    Calculating the sum of employee and employer care insurance contribution.
+
+    Parameters
+    ----------
+    hat_kinder : pd.Series
+             Boolean indicating if individual has kids.
+
+    alter : pd.Series
+            Age of individual
+
+    midi_job_bemessungsentgelt : pd.Series
+                                 The Bemessungsentgelt subject to social insurance
+                                 contributions.
+    params
+
+    Returns
+    -------
+
+    """
+    out = (
+        2 * params["soz_vers_beitr"]["pflegev"]["standard"] * midi_job_bemessungsentgelt
+    )
+    zusatz_kinderlos = (
+        params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"]
+        * midi_job_bemessungsentgelt
+    )
+    out.loc[~hat_kinder & alter.gt(22)] += zusatz_kinderlos.loc[
+        ~hat_kinder & alter.gt(22)
+    ]
+
+    return pd.Series(
+        index=midi_job_bemessungsentgelt.index,
+        data=out,
+        name="ges_beitr_pflegevv_midi_job",
+    )
