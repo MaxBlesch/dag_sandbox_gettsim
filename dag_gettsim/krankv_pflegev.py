@@ -411,3 +411,29 @@ def ges_krankv_beitr_rente(krankv_pflichtig_rente, params):
     return pd.Series(
         index=krankv_pflichtig_rente.index, data=out, name="ges_krankv_beitr_rente"
     )
+
+
+def ges_beitr_krankv_midi_job(midi_job_bemessungsentgelt, params):
+    """
+    Calculating the sum of employee and employer health insurance contribution.
+
+    Parameters
+    ----------
+    midi_job_bemessungsentgelt : pd.Series
+                                 The Bemessungsentgelt subject to social insurance
+                                 contributions.
+    params
+
+    Returns
+    -------
+
+    """
+    out = (
+        params["soz_vers_beitr"]["ges_krankv"]["an"]
+        + params["soz_vers_beitr"]["ges_krankv"]["ag"]
+    ) * midi_job_bemessungsentgelt
+    return pd.Series(
+        index=midi_job_bemessungsentgelt.index,
+        data=out,
+        name="ges_beitr_krankv_midi_job",
+    )
