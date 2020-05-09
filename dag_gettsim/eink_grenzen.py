@@ -69,3 +69,64 @@ def in_gleitzone(bruttolohn_m, geringfügig_beschäftigt, params):
         ~geringfügig_beschäftigt
     )
     return pd.Series(index=bruttolohn_m.index, data=out, name="in_gleitzone")
+
+
+def midi_job_bemessungsentgelt(bruttolohn_m, params):
+    """
+    Calcualting the bemessungsentgelt for midi jobs which then will be subject to
+    social insurances.
+
+    Parameters
+    ----------
+    bruttolohn_m : pd.Series
+                   The wage of each individual.
+    params
+
+    Returns
+    -------
+
+    """
+    # First calculate the factor F from the formula in § 163 (10) SGB VI.
+    # Therefore sum the contributions which are the same for employee and employer
+    allg_soz_vers_beitr = (
+        params["soz_vers_beitr"]["rentenv"]
+        + params["soz_vers_beitr"]["pflegev"]["standard"]
+        + params["soz_vers_beitr"]["arbeitsl_v"]
+    )
+
+    # Then calculate specific shares
+    an_anteil = allg_soz_vers_beitr + params["soz_vers_beitr"]["ges_krankv"]["an"]
+    ag_anteil = allg_soz_vers_beitr + params["soz_vers_beitr"]["ges_krankv"]["ag"]
+
+    # Sum over the shares which are specific for midi jobs.
+    pausch_mini = (
+        params["ag_abgaben_geringf"]["ges_krankv"]
+        + params["ag_abgaben_geringf"]["rentenv"]
+        + params["ag_abgaben_geringf"]["st"]
+    )
+    # Now calculate final factor
+    f = pausch_mini / (an_anteil + ag_anteil)
+
+    # Now use the factor to calculate the overall bemessungsentgelt
+    mini_job_anteil = f * params["geringfügige_eink_grenzen"]["mini_job"]["west"]
+    lohn_über_mini = (
+        bruttolohn_m - params["geringfügige_eink_grenzen"]["mini_job"]["west"]
+    )
+    gewichtete_midi_job_rate = (
+        params["geringfügige_eink_grenzen"]["midi_job"]
+        / (
+            params["geringfügige_eink_grenzen"]["midi_job"]
+            - params["geringfügige_eink_grenzen"]["mini_job"]["west"]
+        )
+    ) - (
+        params["geringfügige_eink_grenzen"]["mini_job"]["west"]
+        / (
+            params["geringfügige_eink_grenzen"]["midi_job"]
+            - params["geringfügige_eink_grenzen"]["mini_job"]["west"]
+        )
+        * f
+    )
+    out = mini_job_anteil + lohn_über_mini * gewichtete_midi_job_rate
+    return pd.Series(
+        data=out, index=bruttolohn_m.index, name="midi_job_bemessungsentgelt"
+    )

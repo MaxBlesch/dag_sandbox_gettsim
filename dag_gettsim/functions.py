@@ -7,6 +7,42 @@ from dag_gettsim.soz_vers import soc_ins_contrib
 from dag_gettsim.tests.test_soz_vers import OUT_COLS
 
 
+def arbeitsl_v_regular_job(lohn_rente, params):
+    """
+    Calculates unemployment insurance contributions for regualr jobs.
+
+    Parameters
+    ----------
+    lohn_rente : pd.Series
+                 Wage subject to pension and unemployment insurance contributions.
+    params
+
+    Returns
+    -------
+
+    """
+    out = params["soz_vers_beitr"]["arbeitsl_v"] * lohn_rente
+    return pd.Series(index=lohn_rente.index, data=out, name="arbeitsl_v_regular_job")
+
+
+def rentenv_beit_regular_job(lohn_rente, params):
+    """
+    Calculates pension insurance contributions for regualr jobs.
+
+    Parameters
+    ----------
+    lohn_rente : pd.Series
+                 Wage subject to pension and unemployment insurance contributions.
+    params
+
+    Returns
+    -------
+
+    """
+    out = params["soz_vers_beitr"]["rentenv"] * lohn_rente
+    return pd.Series(index=lohn_rente.index, data=out, name="rentenv_beit_regular_job")
+
+
 def rentenv_beitr_bemess_grenze(wohnort_ost, params):
     """
     Selecting the threshold up to which income is subject to pension insurance
@@ -81,6 +117,7 @@ def rentenv_beit_m(
     jahr,
     geringfügig_beschäftigt,
     in_gleitzone,
+    rentenv_beit_regular_job,
     params,
 ):
 
@@ -111,6 +148,11 @@ def rentenv_beit_m(
         func_kwargs={"params": params},
     )
     df.loc[geringfügig_beschäftigt, "rentenv_beit_m"] = 0
+    cond_payoffs = [
+        (~geringfügig_beschäftigt & ~in_gleitzone, rentenv_beit_regular_job)
+    ]
+    for logic_cond, payoff in cond_payoffs:
+        df.loc[logic_cond, "rentenv_beit_m"] = payoff.loc[logic_cond]
 
     return df["rentenv_beit_m"]
 
@@ -129,6 +171,7 @@ def arbeitsl_v_beit_m(
     jahr,
     geringfügig_beschäftigt,
     in_gleitzone,
+    arbeitsl_v_regular_job,
     params,
 ):
 
@@ -159,5 +202,8 @@ def arbeitsl_v_beit_m(
         func_kwargs={"params": params},
     )
     df.loc[geringfügig_beschäftigt, "arbeitsl_v_beit_m"] = 0
+    cond_payoffs = [(~geringfügig_beschäftigt & ~in_gleitzone, arbeitsl_v_regular_job)]
+    for logic_cond, payoff in cond_payoffs:
+        df.loc[logic_cond, "arbeitsl_v_beit_m"] = payoff.loc[logic_cond]
 
     return df["arbeitsl_v_beit_m"]

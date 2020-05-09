@@ -30,30 +30,9 @@ def soc_ins_contrib(person, params):
     # Calculate accordingly the ssc
     if person["geringfügig_beschäftigt"]:
         pass
-    elif person["in_gleitzone"]:
+    if person["in_gleitzone"]:
         person = calc_midi_contributions(person, params)
-    else:
-        person = ssc_regular_job(person, params, wohnort)
 
-    return person
-
-
-def ssc_regular_job(person, params, wohnort):
-    """Calculates the ssc for a regular job with wage above the midi limit."""
-    # Check if the wage is higher than the Beitragsbemessungsgrenze. If so, only the
-    # value of this is used.
-    person["_lohn_rentenv"] = min(
-        person["bruttolohn_m"], params["beitr_bemess_grenze"]["rentenv"][wohnort]
-    )
-    # Then, calculate employee contributions.
-    # Old-Age Pension Insurance / Rentenversicherung
-    person["rentenv_beit_m"] = (
-        params["soz_vers_beitr"]["rentenv"] * person["_lohn_rentenv"]
-    )
-    # Unemployment Insurance / Arbeitslosenversicherung
-    person["arbeitsl_v_beit_m"] = (
-        params["soz_vers_beitr"]["arbeitsl_v"] * person["_lohn_rentenv"]
-    )
     return person
 
 
