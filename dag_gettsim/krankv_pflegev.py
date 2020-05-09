@@ -2,132 +2,71 @@ import numpy as np
 import pandas as pd
 
 from dag_gettsim.aux_funcs import elementwise_min
-from dag_gettsim.pre_processing.apply_tax_funcs import apply_tax_transfer_func
-from dag_gettsim.soz_vers import soc_ins_contrib
-from dag_gettsim.tests.test_soz_vers import OUT_COLS
 
 
 def ges_krankv_beit_m(
-    p_id,
-    hh_id,
-    tu_id,
-    bruttolohn_m,
-    wohnort_ost,
-    alter,
     selbstständig,
-    hat_kinder,
-    eink_selbstst_m,
     prv_krankv_beit_m,
-    jahr,
     geringfügig_beschäftigt,
     in_gleitzone,
     ges_krankv_beitr_rente,
     ges_krankv_beitr_selbst,
     krankv_beit_regular_job,
+    an_beitr_krankv_midi_job,
     params,
 ):
 
-    df = pd.concat(
-        [
-            p_id,
-            hh_id,
-            tu_id,
-            bruttolohn_m,
-            wohnort_ost,
-            alter,
-            selbstständig,
-            hat_kinder,
-            eink_selbstst_m,
-            prv_krankv_beit_m,
-            jahr,
-            geringfügig_beschäftigt,
-            in_gleitzone,
-        ],
-        axis=1,
+    ges_krankv_beit_m = pd.Series(
+        index=geringfügig_beschäftigt.index, name="ges_krankv_beit_m", dtype=float
     )
-    df = apply_tax_transfer_func(
-        df,
-        tax_func=soc_ins_contrib,
-        level=["hh_id", "tu_id", "p_id"],
-        in_cols=list(df.columns),
-        out_cols=OUT_COLS,
-        func_kwargs={"params": params},
-    )
-    df.loc[geringfügig_beschäftigt, "ges_krankv_beit_m"] = 0
+
+    ges_krankv_beit_m.loc[geringfügig_beschäftigt] = 0
 
     cond_payoffs = [
+        (in_gleitzone, an_beitr_krankv_midi_job),
         (~geringfügig_beschäftigt & ~in_gleitzone, krankv_beit_regular_job),
         (selbstständig & ~prv_krankv_beit_m, ges_krankv_beitr_selbst),
     ]
 
     for logic_cond, payoff in cond_payoffs:
-        df.loc[logic_cond, "ges_krankv_beit_m"] = payoff.loc[logic_cond]
+        ges_krankv_beit_m.loc[logic_cond] = payoff.loc[logic_cond]
 
     # Add the health insurance contribution for pensions
-    df["ges_krankv_beit_m"] += ges_krankv_beitr_rente
-    return df["ges_krankv_beit_m"]
+    ges_krankv_beit_m += ges_krankv_beitr_rente
+    return ges_krankv_beit_m
 
 
 def pflegev_beit_m(
-    p_id,
-    hh_id,
-    tu_id,
-    bruttolohn_m,
-    wohnort_ost,
-    alter,
     selbstständig,
-    hat_kinder,
-    eink_selbstst_m,
     prv_krankv_beit_m,
-    jahr,
     geringfügig_beschäftigt,
     in_gleitzone,
     pflegev_beitr_rente,
     pflegev_beitr_selbst,
     pflegev_beit_regular_job,
+    an_beitr_pflegev_midi_job,
     params,
 ):
 
-    df = pd.concat(
-        [
-            p_id,
-            hh_id,
-            tu_id,
-            bruttolohn_m,
-            wohnort_ost,
-            alter,
-            selbstständig,
-            hat_kinder,
-            eink_selbstst_m,
-            prv_krankv_beit_m,
-            jahr,
-            geringfügig_beschäftigt,
-            in_gleitzone,
-        ],
-        axis=1,
+    pflegev_beit_m = pd.Series(
+        index=geringfügig_beschäftigt.index, name="pflegev_beit_m", dtype=float
     )
-    df = apply_tax_transfer_func(
-        df,
-        tax_func=soc_ins_contrib,
-        level=["hh_id", "tu_id", "p_id"],
-        in_cols=list(df.columns),
-        out_cols=OUT_COLS,
-        func_kwargs={"params": params},
-    )
-    df.loc[geringfügig_beschäftigt, "pflegev_beit_m"] = 0
+
+    pflegev_beit_m.loc[geringfügig_beschäftigt] = 0
 
     cond_payoffs = [
+        (in_gleitzone, an_beitr_pflegev_midi_job),
         (~geringfügig_beschäftigt & ~in_gleitzone, pflegev_beit_regular_job),
         (selbstständig & ~prv_krankv_beit_m, pflegev_beitr_selbst),
     ]
 
     for logic_cond, payoff in cond_payoffs:
-        df.loc[logic_cond, "pflegev_beit_m"] = payoff.loc[logic_cond]
+        pflegev_beit_m.loc[logic_cond] = payoff.loc[logic_cond]
 
     # Add the care insurance contribution for pensions
-    df["pflegev_beit_m"] += pflegev_beitr_rente
+    pflegev_beit_m += pflegev_beitr_rente
 
-    return df["pflegev_beit_m"]
+    return pflegev_beit_m
 
 
 def krankv_beit_regular_job(lohn_krankv, params):

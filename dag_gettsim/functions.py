@@ -2,9 +2,6 @@ import numpy as np
 import pandas as pd
 
 from dag_gettsim.aux_funcs import elementwise_min
-from dag_gettsim.pre_processing.apply_tax_funcs import apply_tax_transfer_func
-from dag_gettsim.soz_vers import soc_ins_contrib
-from dag_gettsim.tests.test_soz_vers import OUT_COLS
 
 
 def arbeitsl_v_regular_job(lohn_rente, params):
