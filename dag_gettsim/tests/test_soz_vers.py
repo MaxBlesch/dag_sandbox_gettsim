@@ -3,9 +3,9 @@ import itertools
 import pandas as pd
 import pytest
 
-from dag_gettsim.config import ROOT_DIR
 from dag_gettsim.dag import compute_taxes_and_transfers
-from dag_gettsim.pre_processing.policy_for_date import get_policies_for_date
+from gettsim.config import ROOT_DIR
+from gettsim.pre_processing.policy_for_date import get_policies_for_date
 
 INPUT_COLS = [
     "p_id",

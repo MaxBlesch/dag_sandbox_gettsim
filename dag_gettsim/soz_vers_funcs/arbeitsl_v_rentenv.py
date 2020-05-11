@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from dag_gettsim.aux_funcs import elementwise_min
-
 
 def arbeitsl_v_regular_job(lohn_rente, params):
     """
@@ -86,7 +84,9 @@ def lohn_rente(bruttolohn_m, rentenv_beitr_bemess_grenze, params):
     -------
 
     """
-    out = elementwise_min(bruttolohn_m, rentenv_beitr_bemess_grenze)
+    out = bruttolohn_m.where(
+        bruttolohn_m < rentenv_beitr_bemess_grenze, rentenv_beitr_bemess_grenze
+    )
     return pd.Series(index=bruttolohn_m.index, data=out, name="lohn_rente")
 
 

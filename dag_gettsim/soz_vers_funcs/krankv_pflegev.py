@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from dag_gettsim.aux_funcs import elementwise_min
-
 
 def ges_krankv_beit_m(
     selbstständig,
@@ -135,7 +133,9 @@ def lohn_krankv(bruttolohn_m, krankv_beitr_bemess_grenze, params):
     -------
 
     """
-    out = elementwise_min(bruttolohn_m, krankv_beitr_bemess_grenze)
+    out = bruttolohn_m.where(
+        bruttolohn_m < krankv_beitr_bemess_grenze, krankv_beitr_bemess_grenze
+    )
     return pd.Series(index=bruttolohn_m.index, data=out, name="lohn_krankv")
 
 
@@ -243,7 +243,10 @@ def krankv_pflichtig_eink_selbst(eink_selbstst_m, bezugsgröße, params):
     -------
 
     """
-    out = elementwise_min(eink_selbstst_m, bezugsgröße.multiply(0.75))
+    dreiviertel_bezugsgröße = bezugsgröße.multiply(0.75)
+    out = eink_selbstst_m.where(
+        eink_selbstst_m < dreiviertel_bezugsgröße, dreiviertel_bezugsgröße
+    )
     return pd.Series(
         index=eink_selbstst_m.index, data=out, name="krankv_pflichtig_eink_selbst"
     )
@@ -267,7 +270,9 @@ def krankv_pflichtig_rente(ges_rente_m, krankv_beitr_bemess_grenze, params):
     -------
 
     """
-    out = elementwise_min(ges_rente_m, krankv_beitr_bemess_grenze)
+    out = ges_rente_m.where(
+        ges_rente_m < krankv_beitr_bemess_grenze, krankv_beitr_bemess_grenze
+    )
     return pd.Series(name="krankv_pflichtig_rente", data=out)
 
 

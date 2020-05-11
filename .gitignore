@@ -45,7 +45,7 @@ waf3-*
 !.envrc
 .*pdfsvn
 .idea
-__pycache__
+__pycache__/
 analysis_out
 bld
 build

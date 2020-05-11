@@ -6,7 +6,7 @@ from functools import reduce
 import numpy as np
 import yaml
 
-from dag_gettsim.config import ROOT_DIR
+from gettsim.config import ROOT_DIR
 from gettsim.pre_processing.generic_functions import get_piecewise_parameters
 from gettsim.pre_processing.piecewise_functions import piecewise_polynomial
 
