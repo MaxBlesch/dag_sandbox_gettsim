@@ -44,7 +44,8 @@ waf3-*
 !.pre-commit-config.yaml
 !.envrc
 .*pdfsvn
-__pycache__
+.idea
+__pycache__/
 analysis_out
 bld
 build
