@@ -1,3 +1,4 @@
+import copy
 import inspect
 from functools import partial
 from pathlib import Path
@@ -28,8 +29,13 @@ def compute_taxes_and_transfers(
 
     Returns:
         dict: Dictionary of Series containing the target quantities.
-functions
+
     """
+    data = copy.deepcopy(data)
+
+    if isinstance(targets, str) and targets != "all":
+        targets = [targets]
+
     user_functions = [] if functions is None else functions
     user_functions = load_functions(user_functions)
 
@@ -50,7 +56,14 @@ functions
     if targets != "all":
         dag = prune_dag(dag, targets)
 
+        # Remove columns in data which are not used in the DAG.
+        relevant_columns = set(data) & set(dag.nodes)
+        data = _dict_subset(data, relevant_columns)
+
     results = execute_dag(func_dict, dag, data, targets)
+
+    if len(results) == 1:
+        results = list(results.values())[0]
 
     if return_dag:
         results = (results, dag)
@@ -145,8 +158,9 @@ def execute_dag(func_dict, dag, data, targets):
 
     """
     # Needed for garbage collection.
-    visited_nodes = set()
+    visited_nodes = set(data)
     results = data.copy()
+
     for task in nx.topological_sort(dag):
         if task not in results:
             if task in func_dict:
@@ -183,14 +197,12 @@ def collect_garbage(results, task, visited_nodes, targets, dag):
         results (dict)
 
     """
-    ancestors_of_task = nx.ancestors(dag, task)
-
-    for node in ancestors_of_task:
+    for ancestor in dag.predecessors(task):
         is_obsolete = all(
-            descendant in visited_nodes for descendant in nx.descendants(dag, node)
+            successor in visited_nodes for successor in dag.successors(ancestor)
         )
 
-        if is_obsolete and task not in targets:
-            del results[node]
+        if is_obsolete and ancestor not in targets:
+            del results[ancestor]
 
     return results
