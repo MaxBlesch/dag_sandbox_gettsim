@@ -2,79 +2,67 @@ import numpy as np
 import pandas as pd
 
 
-def ges_krankv_beit_m(
-    selbstständig,
-    prv_krankv_beit_m,
+def ges_krankv_beitr_m(
     geringfügig_beschäftigt,
-    in_gleitzone,
     ges_krankv_beitr_rente,
     ges_krankv_beitr_selbst,
-    krankv_beit_regular_job,
+    krankv_beitr_regulär_beschäftigt,
     an_beitr_krankv_midi_job,
-    params,
 ):
 
-    ges_krankv_beit_m = pd.Series(
-        index=geringfügig_beschäftigt.index, name="ges_krankv_beit_m", dtype=float
+    ges_krankv_beitr_m = pd.Series(
+        index=geringfügig_beschäftigt.index, name="ges_krankv_beitr_m", dtype=float
     )
 
-    ges_krankv_beit_m.loc[geringfügig_beschäftigt] = 0
+    ges_krankv_beitr_m.loc[geringfügig_beschäftigt] = 0
 
-    cond_payoffs = [
-        (in_gleitzone, an_beitr_krankv_midi_job),
-        (~geringfügig_beschäftigt & ~in_gleitzone, krankv_beit_regular_job),
-        (selbstständig & ~prv_krankv_beit_m, ges_krankv_beitr_selbst),
-    ]
-
-    for logic_cond, payoff in cond_payoffs:
-        ges_krankv_beit_m.loc[logic_cond] = payoff.loc[logic_cond]
+    # Assign calculated contributions
+    ges_krankv_beitr_m.loc[an_beitr_krankv_midi_job.index] = an_beitr_krankv_midi_job
+    ges_krankv_beitr_m.loc[
+        krankv_beitr_regulär_beschäftigt.index
+    ] = krankv_beitr_regulär_beschäftigt
+    ges_krankv_beitr_m.loc[ges_krankv_beitr_selbst.index] = ges_krankv_beitr_selbst
 
     # Add the health insurance contribution for pensions
-    ges_krankv_beit_m += ges_krankv_beitr_rente
-    return ges_krankv_beit_m
+    ges_krankv_beitr_m += ges_krankv_beitr_rente
+    return ges_krankv_beitr_m
 
 
-def pflegev_beit_m(
-    selbstständig,
-    prv_krankv_beit_m,
+def pflegev_beitr_m(
     geringfügig_beschäftigt,
-    in_gleitzone,
     pflegev_beitr_rente,
     pflegev_beitr_selbst,
-    pflegev_beit_regular_job,
+    pflegev_beitr_regulär_beschäftigt,
     an_beitr_pflegev_midi_job,
-    params,
 ):
 
-    pflegev_beit_m = pd.Series(
-        index=geringfügig_beschäftigt.index, name="pflegev_beit_m", dtype=float
+    pflegev_beitr_m = pd.Series(
+        index=geringfügig_beschäftigt.index, name="pflegev_beitr_m", dtype=float
     )
 
-    pflegev_beit_m.loc[geringfügig_beschäftigt] = 0
+    pflegev_beitr_m.loc[geringfügig_beschäftigt] = 0
 
-    cond_payoffs = [
-        (in_gleitzone, an_beitr_pflegev_midi_job),
-        (~geringfügig_beschäftigt & ~in_gleitzone, pflegev_beit_regular_job),
-        (selbstständig & ~prv_krankv_beit_m, pflegev_beitr_selbst),
-    ]
-
-    for logic_cond, payoff in cond_payoffs:
-        pflegev_beit_m.loc[logic_cond] = payoff.loc[logic_cond]
+    # Assign calculated contributions
+    pflegev_beitr_m.loc[an_beitr_pflegev_midi_job.index] = an_beitr_pflegev_midi_job
+    pflegev_beitr_m.loc[
+        pflegev_beitr_regulär_beschäftigt.index
+    ] = pflegev_beitr_regulär_beschäftigt
+    pflegev_beitr_m.loc[pflegev_beitr_selbst.index] = pflegev_beitr_selbst
 
     # Add the care insurance contribution for pensions
-    pflegev_beit_m += pflegev_beitr_rente
+    pflegev_beitr_m += pflegev_beitr_rente
 
-    return pflegev_beit_m
+    return pflegev_beitr_m
 
 
-def krankv_beit_regular_job(lohn_krankv, params):
+def krankv_beitr_regulär_beschäftigt(lohn_krankv_regulär_beschäftigt, params):
     """
     Calculates health insurance contributions for regualr jobs
 
     Parameters
     ----------
-    lohn_krankv : pd.Series
-                Wage subject to health and care insurance
+    lohn_krankv_regulär_beschäftigt : pd.Series
+                                      Wage subject to health and care insurance
     params
 
     Returns
@@ -82,24 +70,24 @@ def krankv_beit_regular_job(lohn_krankv, params):
     Pandas Series containing monthly health insurance contributions for self employed
     income.
     """
-    out = params["soz_vers_beitr"]["ges_krankv"]["an"] * lohn_krankv
-    return pd.Series(index=lohn_krankv.index, data=out, name="krankv_beit_regular_job")
+    out = params["soz_vers_beitr"]["ges_krankv"]["an"] * lohn_krankv_regulär_beschäftigt
+    return out.rename("krankv_beitr_regulär_beschäftigt")
 
 
-def pflegev_beit_regular_job(hat_kinder, lohn_krankv, alter, params):
+def pflegev_beitr_regulär_beschäftigt(
+    pflegev_zusatz_kinderlos, lohn_krankv_regulär_beschäftigt, params
+):
     """
     Calculates care insurance contributions for regular jobs.
 
     Parameters
     ----------
-    hat_kinder : pd.Series
-                 Boolean indicating if individual has kids.
+    pflegev_zusatz_kinderlos : pd.Series
+                               Pandas Series indicating addtional care insurance
+                               contribution for childless individuals.
 
-    alter : pd.Series
-            Age of individual
-
-    lohn_krankv : pd.Series
-                Wage subject to health and care insurance
+    lohn_krankv_regulär_beschäftigt : pd.Series
+                                      Wage subject to health and care insurance
     params
 
     Returns
@@ -107,14 +95,20 @@ def pflegev_beit_regular_job(hat_kinder, lohn_krankv, alter, params):
     Pandas Series containing monthly care insurance contributions for self employed
     income.
     """
-    out = lohn_krankv.multiply(params["soz_vers_beitr"]["pflegev"]["standard"])
-    out.loc[~hat_kinder & alter.gt(22)] += (
-        params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"] * lohn_krankv
+    out = lohn_krankv_regulär_beschäftigt.multiply(
+        params["soz_vers_beitr"]["pflegev"]["standard"]
     )
-    return pd.Series(index=lohn_krankv.index, data=out, name="pflegev_beit_regular_job")
+    zusatz_kinderlos = lohn_krankv_regulär_beschäftigt.loc[
+        pflegev_zusatz_kinderlos
+    ].multiply(params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"])
+
+    out.loc[pflegev_zusatz_kinderlos] += zusatz_kinderlos
+    return out.rename("pflegev_beitr_regulär_beschäftigt")
 
 
-def lohn_krankv(bruttolohn_m, krankv_beitr_bemess_grenze, params):
+def lohn_krankv_regulär_beschäftigt(
+    bruttolohn_m, krankv_beitr_bemess_grenze, regulär_beschäftigt
+):
     """
     Calculate the wage, which is subject to pension insurance contributions.
 
@@ -122,21 +116,23 @@ def lohn_krankv(bruttolohn_m, krankv_beitr_bemess_grenze, params):
     ----------
     bruttolohn_m : pd.Series
                    The wage of each individual.
-
+    regulär_beschäftigt : pd.Series
+                          Boolean Series indicating regular employment.
     krankv_beitr_bemess_grenze : pd.Series
                                  Threshold for wage subject to health insurance
                                  contributions.
 
-    params
 
     Returns
     -------
 
     """
-    out = bruttolohn_m.where(
-        bruttolohn_m < krankv_beitr_bemess_grenze, krankv_beitr_bemess_grenze
+    bruttolohn_m_regulär_beschäftigt = bruttolohn_m.loc[regulär_beschäftigt]
+    bemess_grenze = krankv_beitr_bemess_grenze.loc[regulär_beschäftigt]
+    out = bruttolohn_m_regulär_beschäftigt.where(
+        bruttolohn_m_regulär_beschäftigt < bemess_grenze, bemess_grenze
     )
-    return pd.Series(index=bruttolohn_m.index, data=out, name="lohn_krankv")
+    return out.rename("lohn_krankv_regulär_beschäftigt")
 
 
 def ges_krankv_beitr_selbst(krankv_pflichtig_eink_selbst, params):
@@ -162,14 +158,12 @@ def ges_krankv_beitr_selbst(krankv_pflichtig_eink_selbst, params):
         + params["soz_vers_beitr"]["ges_krankv"]["ag"]
     )
     out = krankv_pflichtig_eink_selbst.multiply(beitr_satz)
-    return pd.Series(
-        index=krankv_pflichtig_eink_selbst.index,
-        data=out,
-        name="ges_krankv_beitr_selbst",
-    )
+    return out.rename("ges_krankv_beitr_selbst")
 
 
-def pflegev_beitr_selbst(hat_kinder, alter, krankv_pflichtig_eink_selbst, params):
+def pflegev_beitr_selbst(
+    pflegev_zusatz_kinderlos, krankv_pflichtig_eink_selbst, params
+):
     """
     Calculates care insurance contributions. Self-employed pay the full
     contribution (employer + employee), which is either assessed on their
@@ -177,11 +171,9 @@ def pflegev_beitr_selbst(hat_kinder, alter, krankv_pflichtig_eink_selbst, params
 
     Parameters
     ----------
-    hat_kinder : pd.Series
-                 Boolean indicating if individual has kids.
-
-    alter : pd.Series
-            Age of individual
+    pflegev_zusatz_kinderlos : pd.Series
+                               Pandas Series indicating addtional care insurance
+                               contribution for childless individuals.
 
     krankv_pflichtig_eink_selbst : pd.Series
                                      Income from self employment subject to health
@@ -196,12 +188,12 @@ def pflegev_beitr_selbst(hat_kinder, alter, krankv_pflichtig_eink_selbst, params
     out = krankv_pflichtig_eink_selbst.multiply(
         2 * params["soz_vers_beitr"]["pflegev"]["standard"]
     )
-    # Todo: No hardcoded 22.
-    out.loc[~hat_kinder & alter.gt(22)] += (
-        params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"]
-        * krankv_pflichtig_eink_selbst
-    )
-    return pd.Series(index=alter.index, data=out, name="pflegev_beitr_selbst")
+    zusatz_kinderlos = krankv_pflichtig_eink_selbst.loc[
+        pflegev_zusatz_kinderlos
+    ].multiply(params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"])
+
+    out.loc[pflegev_zusatz_kinderlos] += zusatz_kinderlos
+    return out.rename("pflegev_beitr_selbst")
 
 
 def bezugsgröße(wohnort_ost, params):
@@ -225,34 +217,36 @@ def bezugsgröße(wohnort_ost, params):
     return pd.Series(index=wohnort_ost.index, data=out, name="bezugsgröße")
 
 
-def krankv_pflichtig_eink_selbst(eink_selbstst_m, bezugsgröße, params):
+def krankv_pflichtig_eink_selbst(eink_selbst_m, bezugsgröße, selbsständig_ges_krankv):
     """
-    Choose the amount pension which is subject to health insurance contribution.
+    Choose the amount selfemployed income which is subject to health insurance
+    contribution.
 
     Parameters
     ----------
-    eink_selbstst_m : pd.Series
-                  Pensions an individual recieves.
+    eink_selbst_m : pd.Series
+                    Income from selfemployment
 
     bezugsgröße : pd.Series
-                                   Threshold for income subcect to health insurance.
-
-    params
+                  Threshold for income subcect to health insurance.
+    selbsständig_ges_krankv: pd.Series
+                             Boolean Series indicating selfemployed and public health
+                             insured.
 
     Returns
     -------
 
     """
-    dreiviertel_bezugsgröße = bezugsgröße.multiply(0.75)
-    out = eink_selbstst_m.where(
-        eink_selbstst_m < dreiviertel_bezugsgröße, dreiviertel_bezugsgröße
+    bezugsgröße_selbstv = bezugsgröße.loc[selbsständig_ges_krankv]
+    eink_selbst_m_selbstv = eink_selbst_m.loc[selbsständig_ges_krankv]
+    dreiviertel_bezugsgröße = bezugsgröße_selbstv.multiply(0.75)
+    out = eink_selbst_m_selbstv.where(
+        eink_selbst_m_selbstv < dreiviertel_bezugsgröße, dreiviertel_bezugsgröße
     )
-    return pd.Series(
-        index=eink_selbstst_m.index, data=out, name="krankv_pflichtig_eink_selbst"
-    )
+    return out.rename("krankv_pflichtig_eink_selbst")
 
 
-def krankv_pflichtig_rente(ges_rente_m, krankv_beitr_bemess_grenze, params):
+def krankv_pflichtig_rente(ges_rente_m, krankv_beitr_bemess_grenze):
     """
     Choose the amount pension which is subject to health insurance contribution.
 
@@ -264,7 +258,6 @@ def krankv_pflichtig_rente(ges_rente_m, krankv_beitr_bemess_grenze, params):
     krankv_beitr_bemess_grenze : pd.Series
                                    Threshold for income subcect to health insurance.
 
-    params
 
     Returns
     -------
@@ -273,7 +266,7 @@ def krankv_pflichtig_rente(ges_rente_m, krankv_beitr_bemess_grenze, params):
     out = ges_rente_m.where(
         ges_rente_m < krankv_beitr_bemess_grenze, krankv_beitr_bemess_grenze
     )
-    return pd.Series(name="krankv_pflichtig_rente", data=out)
+    return out.rename("krankv_pflichtig_rente")
 
 
 def krankv_beitr_bemess_grenze(wohnort_ost, params):
@@ -301,21 +294,19 @@ def krankv_beitr_bemess_grenze(wohnort_ost, params):
         ],
     )
     return pd.Series(
-        index=wohnort_ost.index, data=out, name="krankv_beitr_bemess_grenze"
+        data=out, index=wohnort_ost.index, name="krankv_beitr_bemess_grenze"
     )
 
 
-def pflegev_beitr_rente(hat_kinder, alter, krankv_pflichtig_rente, params):
+def pflegev_beitr_rente(pflegev_zusatz_kinderlos, krankv_pflichtig_rente, params):
     """
     Calculating the contribution to health insurance for pension income.
 
     Parameters
     ----------
-    hat_kinder : pd.Series
-                 Boolean indicating if individual has kids.
-
-    alter : pd.Series
-            Age of individual
+    pflegev_zusatz_kinderlos : pd.Series
+                               Pandas Series indicating addtional care insurance
+                               contribution for childless individuals.
 
     krankv_pflichtig_rente : pd.Series
                            Pensions which are subject to social insurance contributions.
@@ -328,11 +319,12 @@ def pflegev_beitr_rente(hat_kinder, alter, krankv_pflichtig_rente, params):
     out = krankv_pflichtig_rente.multiply(
         2 * params["soz_vers_beitr"]["pflegev"]["standard"]
     )
-    # Todo: No hardcoded 22.
-    out.loc[~hat_kinder & alter.gt(22)] += (
-        params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"] * krankv_pflichtig_rente
+    zusatz_kinderlos = krankv_pflichtig_rente.loc[pflegev_zusatz_kinderlos].multiply(
+        params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"]
     )
-    return pd.Series(data=out, name="pflegev_beitr_rente")
+
+    out.loc[pflegev_zusatz_kinderlos] += zusatz_kinderlos
+    return out.rename("pflegev_beitr_rente")
 
 
 def ges_krankv_beitr_rente(krankv_pflichtig_rente, params):
@@ -352,9 +344,7 @@ def ges_krankv_beitr_rente(krankv_pflichtig_rente, params):
     """
 
     out = params["soz_vers_beitr"]["ges_krankv"]["an"] * krankv_pflichtig_rente
-    return pd.Series(
-        index=krankv_pflichtig_rente.index, data=out, name="ges_krankv_beitr_rente"
-    )
+    return out.rename("ges_krankv_beitr_rente")
 
 
 def ges_beitr_krankv_midi_job(midi_job_bemessungsentgelt, params):
@@ -376,14 +366,10 @@ def ges_beitr_krankv_midi_job(midi_job_bemessungsentgelt, params):
         params["soz_vers_beitr"]["ges_krankv"]["an"]
         + params["soz_vers_beitr"]["ges_krankv"]["ag"]
     ) * midi_job_bemessungsentgelt
-    return pd.Series(
-        index=midi_job_bemessungsentgelt.index,
-        data=out,
-        name="ges_beitr_krankv_midi_job",
-    )
+    return out.rename("ges_beitr_krankv_midi_job")
 
 
-def ag_beitr_krankv_midi_job(bruttolohn_m, params):
+def ag_beitr_krankv_midi_job(bruttolohn_m, in_gleitzone, params):
     """
     Calculating the employer health insurance contribution.
 
@@ -391,21 +377,22 @@ def ag_beitr_krankv_midi_job(bruttolohn_m, params):
     ----------
     bruttolohn_m : pd.Series
                    The wage of each individual.
+    in_gleitzone : pd.Series
+                   Boolean Series indicating midi job regulation.
     params
 
     Returns
     -------
 
     """
-    out = params["soz_vers_beitr"]["ges_krankv"]["ag"] * bruttolohn_m
-    return pd.Series(
-        index=bruttolohn_m.index, data=out, name="ag_beitr_krankv_midi_job",
+    bruttolohn_m_in_gleitzone = bruttolohn_m.loc[in_gleitzone]
+    out = bruttolohn_m_in_gleitzone.multiply(
+        params["soz_vers_beitr"]["ges_krankv"]["ag"]
     )
+    return out.rename("ag_beitr_krankv_midi_job")
 
 
-def an_beitr_pflegev_midi_job(
-    ges_beitr_pflegev_midi_job, ag_beitr_pflegev_midi_job, params
-):
+def an_beitr_pflegev_midi_job(ges_beitr_pflegev_midi_job, ag_beitr_pflegev_midi_job):
     """
     Calculating the employer care insurance contribution.
 
@@ -417,23 +404,16 @@ def an_beitr_pflegev_midi_job(
 
     ag_beitr_pflegev_midi_job : pd.Series
                                    Employer care insurance contribution.
-    params
 
     Returns
     -------
 
     """
     out = ges_beitr_pflegev_midi_job - ag_beitr_pflegev_midi_job
-    return pd.Series(
-        index=ag_beitr_pflegev_midi_job.index,
-        data=out,
-        name="an_beitr_pflegev_midi_job",
-    )
+    return out.rename("an_beitr_pflegev_midi_job")
 
 
-def an_beitr_krankv_midi_job(
-    ges_beitr_krankv_midi_job, ag_beitr_krankv_midi_job, params
-):
+def an_beitr_krankv_midi_job(ges_beitr_krankv_midi_job, ag_beitr_krankv_midi_job):
     """
     Calculating the employer health insurance contribution.
 
@@ -445,19 +425,16 @@ def an_beitr_krankv_midi_job(
 
     ag_beitr_krankv_midi_job : pd.Series
                                Employer health insurance contribution.
-    params
 
     Returns
     -------
 
     """
     out = ges_beitr_krankv_midi_job - ag_beitr_krankv_midi_job
-    return pd.Series(
-        index=ag_beitr_krankv_midi_job.index, data=out, name="an_beitr_krankv_midi_job",
-    )
+    return out.rename("an_beitr_krankv_midi_job")
 
 
-def ag_beitr_pflegev_midi_job(bruttolohn_m, params):
+def ag_beitr_pflegev_midi_job(bruttolohn_m, in_gleitzone, params):
     """
     Calculating the employer care insurance contribution.
 
@@ -465,29 +442,32 @@ def ag_beitr_pflegev_midi_job(bruttolohn_m, params):
     ----------
     bruttolohn_m : pd.Series
                    The wage of each individual.
+    in_gleitzone : pd.Series
+                   Boolean Series indicating midi job regulation.
     params
 
     Returns
     -------
 
     """
-    out = params["soz_vers_beitr"]["pflegev"]["standard"] * bruttolohn_m
-    return pd.Series(
-        index=bruttolohn_m.index, data=out, name="ag_beitr_pflegev_midi_job",
+    bruttolohn_m_in_gleitzone = bruttolohn_m.loc[in_gleitzone]
+    out = bruttolohn_m_in_gleitzone.multiply(
+        params["soz_vers_beitr"]["pflegev"]["standard"]
     )
+    return out.rename("ag_beitr_pflegev_midi_job")
 
 
-def ges_beitr_pflegev_midi_job(hat_kinder, alter, midi_job_bemessungsentgelt, params):
+def ges_beitr_pflegev_midi_job(
+    pflegev_zusatz_kinderlos, midi_job_bemessungsentgelt, params
+):
     """
     Calculating the sum of employee and employer care insurance contribution.
 
     Parameters
     ----------
-    hat_kinder : pd.Series
-             Boolean indicating if individual has kids.
-
-    alter : pd.Series
-            Age of individual
+    pflegev_zusatz_kinderlos : pd.Series
+                               Pandas Series indicating addtional care insurance
+                               contribution for childless individuals.
 
     midi_job_bemessungsentgelt : pd.Series
                                  The Bemessungsentgelt subject to social insurance
@@ -498,19 +478,51 @@ def ges_beitr_pflegev_midi_job(hat_kinder, alter, midi_job_bemessungsentgelt, pa
     -------
 
     """
-    out = (
-        2 * params["soz_vers_beitr"]["pflegev"]["standard"] * midi_job_bemessungsentgelt
+    out = midi_job_bemessungsentgelt.multiply(
+        2 * params["soz_vers_beitr"]["pflegev"]["standard"]
     )
-    zusatz_kinderlos = (
-        params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"]
-        * midi_job_bemessungsentgelt
-    )
-    out.loc[~hat_kinder & alter.gt(22)] += zusatz_kinderlos.loc[
-        ~hat_kinder & alter.gt(22)
-    ]
+    zusatz_kinderlos = midi_job_bemessungsentgelt.loc[
+        pflegev_zusatz_kinderlos
+    ].multiply(params["soz_vers_beitr"]["pflegev"]["zusatz_kinderlos"])
 
-    return pd.Series(
-        index=midi_job_bemessungsentgelt.index,
-        data=out,
-        name="ges_beitr_pflegevv_midi_job",
-    )
+    out.loc[pflegev_zusatz_kinderlos] += zusatz_kinderlos
+
+    return out.rename("ges_beitr_pflegev_midi_job")
+
+
+def selbsständig_ges_krankv(selbstständig, prv_krankv):
+    """
+    Create boolean Series indicating selfemployed insures via public health insurance.
+
+    Parameters
+    ----------
+    selbstständig : pd.Series
+                    Boolean Series indicating self employment.
+    prv_krankv : pd.Series
+                 Boolean Series indicating private health insurance
+
+    Returns
+    -------
+
+    """
+    return selbstständig & ~prv_krankv
+
+
+def pflegev_zusatz_kinderlos(hat_kinder, alter):
+    """
+    Create boolean Series indicating addtional care insurance contribution for
+    childless individuals.
+
+    Parameters
+    ----------
+    hat_kinder : pd.Series
+                 Boolean indicating if individual has kids.
+    alter : pd.Series
+            Age of individual
+
+    Returns
+    -------
+
+    """
+    # Todo: No hardcoded 22.
+    return ~hat_kinder & alter.gt(22)

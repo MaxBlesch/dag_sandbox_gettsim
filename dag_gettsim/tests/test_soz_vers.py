@@ -16,27 +16,27 @@ INPUT_COLS = [
     "alter",
     "selbstständig",
     "hat_kinder",
-    "eink_selbstst_m",
+    "eink_selbst_m",
     "ges_rente_m",
-    "prv_krankv_beit_m",
+    "prv_krankv",
     "jahr",
 ]
 
 
 YEARS = [2002, 2010, 2018, 2019, 2020]
 OUT_COLS = [
-    "sozialv_beit_m",
-    "rentenv_beit_m",
-    "arbeitsl_v_beit_m",
-    "ges_krankv_beit_m",
-    "pflegev_beit_m",
+    "sozialv_beitr_m",
+    "rentenv_beitr_m",
+    "arbeitsl_v_beitr_m",
+    "ges_krankv_beitr_m",
+    "pflegev_beitr_m",
 ]
 
 
 @pytest.fixture(scope="module")
 def input_data():
     file_name = "test_dfs_ssc.csv"
-    out = pd.read_csv(ROOT_DIR / "tests" / file_name)
+    out = pd.read_csv(ROOT_DIR / "../dag_gettsim/tests" / file_name)
     return out
 
 

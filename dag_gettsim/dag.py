@@ -85,7 +85,12 @@ def create_function_dict(user_functions, internal_functions, params):
     """
     functions = {**internal_functions, **user_functions}
 
-    partialed = {name: partial(func, params=params) for name, func in functions.items()}
+    partialed = {
+        name: partial(func, params=params)
+        if "params" in inspect.getfullargspec(func).args
+        else func
+        for name, func in functions.items()
+    }
 
     return partialed
 
